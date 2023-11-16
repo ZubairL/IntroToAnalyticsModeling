@@ -1,0 +1,127 @@
+---
+title: "Homework1-K Nearest Neighbors"
+author: "N/A"
+date: "2023-08-27"
+output: rmarkdown::github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(kernlab)
+library(class)
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+
+
+```{r}
+#Describe a situation or problem from your job, everyday life, current events, etc., for which a classification model would be appropriate. List some (up to 5) predictors that you might use.
+
+#ANS.	I currently sell my old Pokémon cards that I used to collect years ago. Each of these have a certain value and go for a very high price or a very low price. Some of the predictors I would use to help me determine what price to set it at would be the type of the Pokémon, the rarity of the card, whether or not it is a reverse holo or a holographic card,  by set, or by what date the card was produced. 
+```
+
+
+```{r}
+# Read the CSV file into a data frame
+dataset = read.csv("credit_card.csv", header = TRUE)
+
+# Convert the data frame into a matrix
+dataset_matrix = as.matrix(dataset)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+#KSVM Model
+model = ksvm(dataset_matrix[, 1:10], dataset_matrix[, 11], type = "C-svc", kernel = "vanilladot", C = 200, scaled = TRUE)
+```
+
+```{r}
+#calculation of a1…am
+a = colSums(model@xmatrix[[1]] * model@coef[[1]])
+decimals = format(a, scientific = FALSE)
+print(decimals)
+```
+
+
+```{r}
+#Equation for Classifier:
+#y = -0.00035658041*A1 - 0.00005234880*A2 - 0.00016509945 * A3 +0.00111617077 *A4 +
+#     1.00758841864 * A5 + -0.00047342530 * A6 + -0.00005133491 * A7 - 0.00003788560 * A8 
+#     + -0.00006765545 * A9 +  0.10600825114 * A10"
+```
+
+
+```{r}
+#calculation of a0
+a0 = model@b
+print(a0)
+
+pred = predict(model,dataset_matrix[,1:10])
+```
+
+
+```{r}
+sum(pred == dataset_matrix[,11]) / nrow(dataset_matrix)
+```
+
+
+##KNN CLASSIFIER
+
+
+
+```{r}
+# Create empty lists to store results
+scaled_X_list <- list()
+y_list <- list()
+
+# Iterate through each row index
+
+#I explicitly used a for loop here for readability purposes.
+#The purpose of excluding the ith row is to ensure that when you use 
+#this dataset for training or testing purposes, the ith row is not influencing
+#the result. A similar result could've been achieved using the following code: 
+#X = scale(dataset_matrix[-i,1:10])  # Predictor variables
+#y = dataset_matrix[-i,11] 
+#KNN is able to perform the following for loop under the hood. 
+
+for (i in 1:nrow(dataset_matrix)) {
+  # Select predictor variables for all rows except i
+  X <- scale(dataset_matrix[-i, 1:10])
+  scaled_X_list[[i]] <- X
+  
+  # Select response variable for all rows except i
+  y <- dataset_matrix[-i, 11]
+  y_list[[i]] <- y
+}
+```
+
+
+
+```{r}
+knn_instance = knn(X, test = X, cl= y, k = 3) # I tried k-values of 3,5 and 7.
+```
+
+
+
+```{r}
+predictions = table(y, knn_instance)
+predictions
+```
+
+
+
+```{r}
+#Based on experimentation, the k-value that produced the best results was a k-value of 3.
+#I have summarized the results into a confusion matrix from the table() method. The best
+# knn classifier produced 329 true negative(actual 0, predicted 0), 29 false positives(actual 0,
+#predicted 1, 33 false negatives( actual 1, predicted 0) and 262 true positive(actual 1, predicted 1).
+
+```
+
